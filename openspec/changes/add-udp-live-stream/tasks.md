@@ -13,4 +13,4 @@
 
 ## 3. Docs
 
-- [ ] 3.1 README: option row and a receiving example with `nc` and Python; verify: review
+- [x] 3.1 README: option row and a receiving example with `nc` and Python; verify: review

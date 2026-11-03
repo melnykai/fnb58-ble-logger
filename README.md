@@ -66,12 +66,42 @@ Pin a specific tester with `FNB58D_OPTS="-a AA:BB:CC:DD:EE:FF"` in `/etc/default
 | `-k, --keep-days N` | 14 | delete CSV files older than N days; 0 keeps all |
 | `-r, --raw` | off | also log every raw frame, all types, as hex |
 | `-v, --verbose` | off | debug messages, including the BLE library |
+| `-u, --udp HOST:PORT` | off | also send each measurement as one JSON datagram; `[IPv6]:PORT` works |
+
+### Live stream
+
+With `--udp`, every line written to the CSV is also sent as one UDP datagram of JSON, same values
+and decimals:
+
+```json
+{"epoch_s":1793699888.642,"voltage_v":5.1613,"current_a":0.1054,"power_w":0.5442}
+```
+
+```sh
+./build/fnb58d -o ~/fnb58 --udp 127.0.0.1:5005
+nc -ul 5005                                # one JSON line per measurement
+```
+
+```python
+import json, socket
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+s.bind(("0.0.0.0", 5005))
+while True:
+    m = json.loads(s.recv(256))
+    print(f'{m["voltage_v"]:.3f} V  {m["current_a"]:.3f} A')
+```
+
+The CSV stays the record: sending never blocks, lost datagrams are not re-sent, and failed sends are
+reported as one `udp: <n> send errors` line per minute at most. A bad or unresolvable address stops
+the daemon at start with exit code 2. The stream is neither authenticated nor encrypted; send it to
+localhost or a trusted network only.
 
 ## How it works
 
 ```
 FNB58 ──BLE──> bluetoothd (BlueZ) ──D-Bus──> bluez_inc ──callbacks──> fnb58d ──> <day>_fnb58.csv
-                                                                          └─────> journal (events)
+                                                                          ├─────> journal (events)
+                                                                          └─────> UDP JSON (--udp, optional)
 ```
 
 - **Connect:** scan by name or address, connect, write `aa8100f4` then `aa8200a7` to `ffe9`, and
@@ -126,7 +156,7 @@ openspec archive add-udp-live-stream --yes      # merges the delta into specs/
 | Long runs | verified on hardware: 5 h 27 min under systemd, 78,512 readings, no gap; 12 h or more **not run yet** |
 | Unit as shipped (`DynamicUser`) | **not run yet**; the daemon was run as a service under a regular user |
 | Frame types `05`–`08`, check byte | unknown, see [docs/protocol.md](docs/protocol.md) |
-| Live UDP stream | specified in `openspec/changes/add-udp-live-stream`, not implemented |
+| Live UDP stream | implemented; formatting, addresses and non-blocking sends verified by unit test; **not yet run with a tester** |
 
 Tested on Ubuntu 26.04 with BlueZ and an Intel laptop adapter.
 
@@ -136,7 +166,9 @@ Tested on Ubuntu 26.04 with BlueZ and an Intel laptop adapter.
 |---|---|
 | `src/fnb58d.c` | daemon: options, state machine, CSV, watchdogs, journal |
 | `src/fnb58_proto.{h,c}` | frame parser and decoding, plain C |
+| `src/udp_out.{h,c}` | live UDP stream: JSON formatting, non-blocking send, plain C |
 | `tests/test_proto.c` | parser test on captured notifications |
+| `tests/test_udp_out.c` | stream test: exact bytes, addresses, sends to a closed port |
 | `systemd/fnb58d.service` | service unit |
 | `tools/fnb58_ble.py` | Python prototype (bleak), used to find the protocol |
 | `tools/plot_csv.py` | plot CSV files: binned overview or raw window (matplotlib) |
