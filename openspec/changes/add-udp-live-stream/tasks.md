@@ -3,7 +3,7 @@
 ## 1. Formatting and sending
 
 - [x] 1.1 `src/udp_out.{h,c}`: `udp_out_format()` writes `{"epoch_s":…,"voltage_v":…,"current_a":…,"power_w":…}\n` with 3 and 4 decimals; verify: `ctest -R udp_out` checks the exact bytes for 5.1613 V, 0.1054 A, 0.5442 W
-- [ ] 1.2 Non-blocking send with an error counter; verify: unit test sends to a closed local port and the counter increases while the call returns at once
+- [x] 1.2 Non-blocking send with an error counter; verify: unit test sends to a closed local port and the counter increases while the call returns at once
 
 ## 2. Daemon
 
