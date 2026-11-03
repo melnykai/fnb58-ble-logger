@@ -120,21 +120,26 @@ The full behaviour, with scenarios, is the spec:
 ```
 openspec/
 ├── config.yaml                      project context and rules for every artifact
-├── specs/fnb58-ble-logger/spec.md   current behaviour: 10 requirements (source of truth)
-└── changes/
-    ├── archive/2026-11-03-add-fnb58-ble-logger/   baseline, post-factum, archived
-    └── add-udp-live-stream/                       spec-first, proposed, not implemented
+├── specs/fnb58-ble-logger/spec.md   current behaviour: 14 requirements (source of truth)
+└── changes/archive/
+    ├── 2026-11-03-add-fnb58-ble-logger/   baseline, written post-factum from tested behaviour
+    └── 2026-11-03-add-udp-live-stream/    spec-first: proposal, then code, task by task
 ```
 
-The loop, as used here:
+The loop, as `add-udp-live-stream` went through it:
 
 ```sh
-openspec list                                   # open changes and their task counts
-openspec show add-udp-live-stream               # read a proposal
+# write proposal, design, spec delta and tasks (openspec new change <name>); no code
 openspec validate --all --strict                # what CI runs on every push
-# implement the tasks, tick them in tasks.md, then:
+openspec instructions apply --change add-udp-live-stream   # tasks and project context for the agent
+# one commit per task, ticking it in tasks.md only when its verify: check passed
 openspec archive add-udp-live-stream --yes      # merges the delta into specs/
 ```
+
+The history shows it: `git log --oneline 6cb3299..` has one commit per task (1.1, 1.2, 2.1, 2.2,
+2.3, 3.1). The two hardware tasks were committed with their boxes unticked, ticked in a later
+commit once the tester checks passed, and only then was the change archived. The design was
+corrected during implementation, where the code showed a better place for a decision.
 
 - **Every requirement ends with a `Verify:` line:**
   - `test:<name>`: a `ctest` test;
@@ -156,7 +161,7 @@ openspec archive add-udp-live-stream --yes      # merges the delta into specs/
 | Long runs | verified on hardware: 5 h 27 min under systemd, 78,512 readings, no gap; 12 h or more **not run yet** |
 | Unit as shipped (`DynamicUser`) | **not run yet**; the daemon was run as a service under a regular user |
 | Frame types `05`–`08`, check byte | unknown, see [docs/protocol.md](docs/protocol.md) |
-| Live UDP stream | implemented; formatting, addresses and non-blocking sends verified by unit test; **not yet run with a tester** |
+| Live UDP stream | verified by unit test and on hardware: 334 of 334 datagrams identical to their CSV lines; 5.4 min against a refused port, CSV unaffected (4.00 readings/s), 5 warning lines |
 
 Tested on Ubuntu 26.04 with BlueZ and an Intel laptop adapter.
 

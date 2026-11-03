@@ -21,7 +21,25 @@ would be a guess. So the first change, `add-fnb58-ble-logger`, was written from 
 archived as the baseline.
 
 Once that baseline exists, the reason for working backwards is gone. The next change,
-`add-udp-live-stream`, is spec-first: proposal, design, requirements and tasks, with no code yet.
+`add-udp-live-stream`, was spec-first: proposal, design, requirements and tasks were committed and
+validated before any code.
+
+## The spec-first change, as it went
+
+- **One commit per task**, in task order, each naming its task number. A box was ticked only when
+  that task's `verify:` check had passed.
+- **Unit-testable parts first.** Tasks 1.1 and 1.2 built `src/udp_out.c` without GLib, so the
+  datagram bytes, address parsing and non-blocking sends were tested without a tester.
+- **The design was corrected, not ignored.** Writing the send test showed that on Linux an
+  unconnected UDP socket never reports a refused port, so the "errors are counted" requirement could
+  not be met as designed. The socket is now connected, and `design.md` was updated in the same commit
+  as the code.
+- **Hardware tasks waited for hardware.** Tasks 2.2 and 2.3 were committed with their boxes
+  unticked. The first test session failed before any data arrived. The unchanged 0.1.0 binary failed
+  the same way, which put the fault on the tester's side; a power cycle fixed it. Then both checks
+  passed: 334 of 334 datagrams matched their CSV lines, and 5.4 min against a refused port left the
+  CSV at 4.00 readings/s with exactly 5 warning lines.
+- **Archive last.** `openspec archive` merged the 4 new requirements into the main spec (now 14).
 
 ## Steps
 
