@@ -1,0 +1,33 @@
+schema: spec-driven
+
+context: |
+  fnb58d is a Linux daemon that reads an FNIRSI FNB58 USB power tester over Bluetooth LE and logs
+  voltage, current and power to daily CSV files. C11, one GLib main loop, BlueZ over the system
+  D-Bus through the vendored bluez_inc library (third_party/, never modified in place).
+  Constraints an agent cannot infer from the code:
+  - The tester's Bluetooth protocol is reverse-engineered, not documented by the vendor.
+    docs/protocol.md is the reference; anything not listed there as confirmed is unknown.
+  - The frame check byte algorithm is unknown. Never claim frames are checksum-validated.
+  - Measurements go to files only. The journal carries events, never one line per measurement.
+  - The daemon must recover from a lost or silent tester by itself, without exiting.
+  - Hardware behaviour can only be verified with a real tester. Say which requirements were
+    verified on hardware and which were only reviewed.
+
+rules:
+  proposal:
+    - "State what is out of scope"
+    - "Say whether the change is spec-first (written before code) or post-factum (written after)"
+  specs:
+    - "Each requirement is one SHALL statement followed by a line `Verify: test:<ctest name> | hardware | review`"
+    - "Every quantity carries its unit (s, V, A, W, bytes)"
+    - "Describe observable behaviour: files, columns, journal lines, timings, BLE writes; not internal function names"
+  design:
+    - "Name the source file where each decision lands"
+  tasks:
+    - "Each task ends with `verify:` and the concrete check that proves it"
+    - "Hardware checks name the tester state (on, off, out of range) and the expected journal lines"
+
+operations:
+  archive:
+    guidance:
+      - "Archive when the code is merged. Hardware checks not run yet stay unchecked and are listed in README.md under Status"

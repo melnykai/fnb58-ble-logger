@@ -1,0 +1,5 @@
+Upstream: https://github.com/weliem/bluez_inc
+Commit:   157c604 (2026-04-26)
+Content:  binc/, LICENSE (MIT), README.md, copied unmodified with
+          `git archive 157c604 binc LICENSE README.md`.
+Vendored so the daemon builds offline, with no network access at build time.

@@ -1,0 +1,21 @@
+[Unit]
+Description=FNIRSI FNB58 USB tester Bluetooth LE logger (daily CSV)
+Wants=bluetooth.service
+After=bluetooth.service
+
+[Service]
+Type=simple
+# Extra options, e.g. FNB58D_OPTS="-a AA:BB:CC:DD:EE:FF --raw", in /etc/default/fnb58d
+Environment=FNB58D_OPTS=
+EnvironmentFile=-/etc/default/fnb58d
+# Throwaway system user; CSV files go to /var/lib/fnb58d, the only writable path.
+# Needs a BlueZ D-Bus policy that lets non-root users talk to org.bluez (Ubuntu's default does).
+DynamicUser=yes
+StateDirectory=fnb58d
+ExecStart=/usr/local/bin/fnb58d -o /var/lib/fnb58d $FNB58D_OPTS
+Restart=always
+RestartSec=10
+Nice=10
+
+[Install]
+WantedBy=multi-user.target
