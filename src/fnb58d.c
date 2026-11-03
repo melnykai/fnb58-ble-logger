@@ -224,6 +224,7 @@ static void on_frame(const fnb58_frame *frame, void *user) {
     if (fnb58_decode_measurement(frame, &m) != 0) return;
 
     fprintf(app.csv, "%s,%.3f,%.4f,%.4f,%.4f\n", stamp, epoch, m.voltage_v, m.current_a, m.power_w);
+    udp_out_send(&app.udp, epoch, &m); /* after the CSV line, never blocks */
     app.measurements++;
     app.last = m;
     app.last_rx = g_get_monotonic_time();
