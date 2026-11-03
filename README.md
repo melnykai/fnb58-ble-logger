@@ -44,6 +44,16 @@ python3 tools/plot_csv.py ~/fnb58/*_fnb58.csv -o day.png                  # 10 s
 python3 tools/plot_csv.py ~/fnb58/*_fnb58.csv -b 0 -s 15:25 -d 120 -o zoom.png  # raw window
 ```
 
+### Build options
+
+| CMake option | Effect |
+|---|---|
+| `-DFNB58_WERROR=ON` | warnings in this project's code are errors (the vendored library is exempt) |
+| `-DFNB58_SANITIZE=ON` | build with AddressSanitizer and UndefinedBehaviorSanitizer, for `ctest` runs |
+
+CI builds with warnings as errors on **x86_64 and arm64**, runs the unit tests again under both
+sanitizers, and validates the specs.
+
 ### As a service
 
 ```sh
@@ -163,7 +173,8 @@ corrected during implementation, where the code showed a better place for a deci
 | Frame types `05`–`08`, check byte | unknown, see [docs/protocol.md](docs/protocol.md) |
 | Live UDP stream | verified by unit test and on hardware: 334 of 334 datagrams identical to their CSV lines; 5.4 min against a refused port, CSV unaffected (4.00 readings/s), 5 warning lines |
 
-Tested on Ubuntu 26.04 with BlueZ and an Intel laptop adapter.
+Tested on Ubuntu 26.04 with BlueZ and an Intel laptop adapter. Built and unit-tested in CI on Ubuntu
+24.04 for x86_64 and arm64; not yet run on a Raspberry Pi.
 
 ## Repository map
 
