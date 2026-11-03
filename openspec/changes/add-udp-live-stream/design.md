@@ -22,8 +22,12 @@ watchdog may drop a healthy link.
   the trailing newline makes `nc -ul` output line-based.
 - **Field names match the CSV columns** (`epoch_s`, `voltage_v`, `current_a`, `power_w`), with the
   same decimals. One vocabulary for both outputs.
-- **Address resolved once at start** with `getaddrinfo` (`src/fnb58d.c`). IPv4 and IPv6 both work.
-  An unresolvable address is a configuration error: exit with code 2 before any Bluetooth activity.
+- **Address resolved once at start** with `getaddrinfo` (`udp_out_open()` in `src/udp_out.c`, called
+  from `main()` in `src/fnb58d.c` right after option parsing). `HOST:PORT` or `[IPv6]:PORT`. An
+  unresolvable address is a configuration error: exit with code 2 before any Bluetooth activity.
+- **Connected socket** (`src/udp_out.c`). On Linux an unconnected `sendto()` never reports a refused
+  port; after `connect()`, the ICMP port-unreachable comes back as `ECONNREFUSED` on a later send, so
+  a missing receiver becomes visible in the error count.
 - **Non-blocking socket, errors counted, not retried** (`src/udp_out.c`). `MSG_DONTWAIT`; on failure,
   increment a counter. The 1 s tick logs one warning with the count at most every 60 s, so a receiver
   that is down cannot flood the journal.

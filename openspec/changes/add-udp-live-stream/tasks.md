@@ -7,7 +7,7 @@
 
 ## 2. Daemon
 
-- [ ] 2.1 `--udp HOST:PORT` in `src/fnb58d.c`, resolved once with `getaddrinfo`; verify: `--udp nowhere.invalid:9` exits with code 2 and a clear message before scanning
+- [x] 2.1 `--udp HOST:PORT` in `src/fnb58d.c`, resolved once with `getaddrinfo`; verify: `--udp nowhere.invalid:9` exits with code 2 and a clear message before scanning
 - [ ] 2.2 Send one datagram per accepted measurement, after the CSV line is written; verify: hardware, tester on, `nc -ul 5005` prints one JSON line per CSV line over 60 s
 - [ ] 2.3 Rate-limited warning in the 1 s tick; verify: hardware, `--udp` to a host that refuses the port, journal shows at most one `udp: <n> send errors` line per 60 s and the CSV keeps growing
 

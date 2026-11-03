@@ -24,6 +24,7 @@
 #include "logger.h"
 
 #include "fnb58_proto.h"
+#include "udp_out.h"
 
 #define WRITE_SERVICE "0000ffe5-0000-1000-8000-00805f9b34fb"
 #define WRITE_CHAR "0000ffe9-0000-1000-8000-00805f9b34fb"
@@ -57,6 +58,7 @@ static gint opt_watchdog = 10;
 static gint opt_keep_days = 14;
 static gboolean opt_raw = FALSE;
 static gboolean opt_verbose = FALSE;
+static gchar *opt_udp = NULL;
 
 static GOptionEntry OPTIONS[] = {
     {"address", 'a', 0, G_OPTION_ARG_STRING, &opt_address, "Tester BLE address (default: match by name)", "MAC"},
@@ -66,6 +68,7 @@ static GOptionEntry OPTIONS[] = {
     {"keep-days", 'k', 0, G_OPTION_ARG_INT, &opt_keep_days, "Delete CSV files older than N days, 0 = keep all (default 14)", "N"},
     {"raw", 'r', 0, G_OPTION_ARG_NONE, &opt_raw, "Also log every raw frame to <day>_fnb58_raw.csv", NULL},
     {"verbose", 'v', 0, G_OPTION_ARG_NONE, &opt_verbose, "Debug messages, including bluez_inc", NULL},
+    {"udp", 'u', 0, G_OPTION_ARG_STRING, &opt_udp, "Also send each measurement as a JSON datagram (default off)", "HOST:PORT"},
     {NULL, 0, 0, 0, NULL, NULL, NULL},
 };
 
@@ -89,6 +92,7 @@ static struct {
     char day[11];         /* YYYY-MM-DD of the open files */
     FILE *csv;
     FILE *raw;
+    udp_out udp;
 
     unsigned long measurements;
     unsigned long connects;
@@ -470,6 +474,15 @@ int main(int argc, char **argv) {
     log_set_level(opt_verbose ? LOG_DEBUG : LOG_WARN);
     log_enabled(TRUE);
 
+    udp_out_init(&app.udp);
+    if (opt_udp != NULL) {
+        char err[300];
+        if (udp_out_open(&app.udp, opt_udp, err, sizeof(err)) != 0) {
+            LOG_ERR("udp: %s", err);
+            return 2;
+        }
+    }
+
     if (g_mkdir_with_parents(opt_dir, 0755) != 0) {
         LOG_ERR("cannot create %s: %s", opt_dir, g_strerror(errno));
         return 1;
@@ -485,8 +498,9 @@ int main(int argc, char **argv) {
         LOG_ERR("no Bluetooth adapter found (is bluetoothd running?)");
         return 1;
     }
-    LOG_INFO("fnb58d started: adapter %s, CSV dir %s, watchdog %d s, keep %d days%s",
-             binc_adapter_get_name(app.adapter), opt_dir, opt_watchdog, opt_keep_days, opt_raw ? ", raw frames" : "");
+    LOG_INFO("fnb58d started: adapter %s, CSV dir %s, watchdog %d s, keep %d days%s%s%s",
+             binc_adapter_get_name(app.adapter), opt_dir, opt_watchdog, opt_keep_days, opt_raw ? ", raw frames" : "",
+             opt_udp ? ", UDP to " : "", opt_udp ? opt_udp : "");
 
     binc_adapter_set_discovery_cb(app.adapter, on_scan_result);
     binc_adapter_set_discovery_state_cb(app.adapter, on_discovery_state);
@@ -504,6 +518,7 @@ int main(int argc, char **argv) {
 
     LOG_INFO("stopped: %lu measurements, %lu connects", app.measurements, app.connects);
     close_files();
+    udp_out_close(&app.udp);
     binc_adapter_free(app.adapter);
     g_dbus_connection_close_sync(app.dbus, NULL, NULL);
     g_object_unref(app.dbus);
