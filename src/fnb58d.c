@@ -36,6 +36,7 @@
 #define SCAN_RESTART_S 60
 #define MAX_BACKOFF_S 30
 #define STATS_PERIOD_S 600
+#define UDP_WARN_PERIOD_S 60
 
 static const guint8 START_COMMANDS[][4] = {
     {0xaa, 0x81, 0x00, 0xf4},
@@ -83,6 +84,7 @@ static struct {
     gint64 state_since;   /* monotonic us */
     gint64 last_rx;       /* monotonic us of the last measurement */
     gint64 last_stats;
+    gint64 last_udp_warn;
     guint backoff_s;
     guint rescan_id;
     gsize init_step;
@@ -420,10 +422,17 @@ static gboolean on_tick(gpointer data) {
             break;
     }
 
+    /* At most one line per period, whatever the error rate: a dead receiver cannot flood the journal */
+    if (app.udp.errors > 0 && (now - app.last_udp_warn) / G_USEC_PER_SEC >= UDP_WARN_PERIOD_S) {
+        app.last_udp_warn = now;
+        int last_errno = app.udp.last_errno;
+        LOG_WARN("udp: %lu send errors (last: %s)", udp_out_take_errors(&app.udp), g_strerror(last_errno));
+    }
+
     if ((now - app.last_stats) / G_USEC_PER_SEC >= STATS_PERIOD_S) {
         app.last_stats = now;
-        LOG_INFO("stats: %lu measurements, %lu connects, %lu bytes dropped; last %.4f V %.4f A %.4f W",
-                 app.measurements, app.connects, app.parser.dropped_bytes,
+        LOG_INFO("stats: %lu measurements, %lu connects, %lu bytes dropped, %lu sent over UDP; last %.4f V %.4f A %.4f W",
+                 app.measurements, app.connects, app.parser.dropped_bytes, app.udp.sent,
                  app.last.voltage_v, app.last.current_a, app.last.power_w);
     }
     return G_SOURCE_CONTINUE;
@@ -509,7 +518,7 @@ int main(int argc, char **argv) {
 
     app.loop = g_main_loop_new(NULL, FALSE);
     app.backoff_s = 1;
-    app.last_stats = g_get_monotonic_time();
+    app.last_stats = app.last_udp_warn = g_get_monotonic_time();
     g_unix_signal_add(SIGINT, on_signal, (gpointer) "SIGINT");
     g_unix_signal_add(SIGTERM, on_signal, (gpointer) "SIGTERM");
     g_timeout_add_seconds(1, on_tick, NULL);
