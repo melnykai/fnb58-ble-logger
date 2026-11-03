@@ -71,7 +71,8 @@ These probes produced no notification at all:
   without response;
 - short frames `AA cmd 00 crc` and `AA cmd crc` built with the USB CRC.
 
-The working start commands came from reading an existing community project for this tester.
+The working start commands came from [f4inu/FNB58](https://github.com/f4inu/FNB58), a web-based
+monitor for this tester (MIT). Thanks to its author: those two writes were the missing piece.
 
 ## Exploring further
 

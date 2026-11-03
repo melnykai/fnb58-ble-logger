@@ -60,8 +60,21 @@ GLib so it can be tested without a radio, daily CSV files, and a journal that ca
 The last row is the useful side effect of writing a spec after the code: every SHALL had to be
 checked, and that one had not been tested.
 
+A later unattended run under systemd logged 5 h 27 min (78,512 readings) without a gap; the
+plots in the README come from it.
+
 **7. Specify, validate, archive.** `openspec validate --strict`, then `openspec archive`, which
 generated `openspec/specs/fnb58-ble-logger/spec.md`.
+
+## Working with an AI coding agent
+
+The project was built with [Claude Code](https://claude.com/claude-code), Anthropic's coding agent,
+working in the terminal next to the hardware. The agent wrote most of the code, tests and docs, and
+ran the probes and builds. The author set the scope and made each decision (Bluetooth over USB, C
+for the daemon, CSV for data, what third-party code to trust), handled the tester for every
+hardware test, and reviewed the results. OpenSpec fits this way of working: the spec and
+`config.yaml` give the agent the same rules a human contributor gets, and the `/opsx:*` commands in
+`.claude/` let it follow the propose, apply and archive loop.
 
 ## Skills shown
 

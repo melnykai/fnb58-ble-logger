@@ -16,6 +16,14 @@ before any code. [docs/development-story.md](docs/development-story.md) tells ho
 2026-11-03T10:58:08.820+0100,1793699888.820,4.6013,2.5038,11.5209
 ```
 
+A real session: 5 h 27 min of a bursty USB load, 78,512 readings at 4 per second, no gap. The
+load idles near 10 mA and draws 0.4–1 A for a single reading every few seconds:
+
+![5.5 h overview: 30 s mean and min-max band](docs/session.png)
+![2-minute zoom, every reading](docs/zoom.png)
+
+Both plots come from `tools/plot_csv.py`.
+
 ## Quick start
 
 Needs Linux with BlueZ, `cmake` ≥ 3.16, a C compiler and `libglib2.0-dev`. The BLE library is
@@ -28,7 +36,13 @@ ctest --test-dir build                 # parser test on real captured frames
 ./build/fnb58d -o ~/fnb58 -v           # turn the tester on, enable its Bluetooth
 ```
 
-Today's readings are in `~/fnb58/<YYYY-MM-DD>_fnb58.csv`. Stop with Ctrl+C.
+Today's readings are in `~/fnb58/<YYYY-MM-DD>_fnb58.csv`. Stop with Ctrl+C. To plot them
+(needs `python3-matplotlib`):
+
+```sh
+python3 tools/plot_csv.py ~/fnb58/*_fnb58.csv -o day.png                  # 10 s bins
+python3 tools/plot_csv.py ~/fnb58/*_fnb58.csv -b 0 -s 15:25 -d 120 -o zoom.png  # raw window
+```
 
 ### As a service
 
@@ -109,7 +123,7 @@ openspec archive add-udp-live-stream --yes      # merges the delta into specs/
 | CSV writing, restart, raw frames | verified on hardware |
 | Recovery from a lost link | verified on hardware: tester off for 58 s, streaming 2 s after it came back |
 | Silent-link watchdog, 60 s scan restart | implemented, **not yet triggered on hardware** |
-| Long runs (12 h or more) | **not run yet** |
+| Long runs | verified on hardware: 5 h 27 min under systemd, 78,512 readings, no gap; 12 h or more **not run yet** |
 | Unit as shipped (`DynamicUser`) | **not run yet**; the daemon was run as a service under a regular user |
 | Frame types `05`–`08`, check byte | unknown, see [docs/protocol.md](docs/protocol.md) |
 | Live UDP stream | specified in `openspec/changes/add-udp-live-stream`, not implemented |
@@ -125,6 +139,7 @@ Tested on Ubuntu 26.04 with BlueZ and an Intel laptop adapter.
 | `tests/test_proto.c` | parser test on captured notifications |
 | `systemd/fnb58d.service` | service unit |
 | `tools/fnb58_ble.py` | Python prototype (bleak), used to find the protocol |
+| `tools/plot_csv.py` | plot CSV files: binned overview or raw window (matplotlib) |
 | `third_party/bluez_inc/` | [weliem/bluez_inc](https://github.com/weliem/bluez_inc) 157c604, MIT, unmodified |
 | `openspec/` | specs and changes |
 | `docs/` | protocol notes and development story |
