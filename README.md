@@ -24,6 +24,11 @@ load idles near 10 mA and draws 0.4–1 A for a single reading every few seconds
 
 Both plots come from `tools/plot_csv.py`.
 
+**See it work:** [docs/animation.html](docs/animation.html) is an animated walkthrough in six
+chapters: scan, start commands, frame parsing on real captured bytes, CSV/UDP/journal output, link
+loss and recovery, and midnight rollover. Speed from 0.25× to 2×. GitHub shows HTML as source, so
+download the file or clone the repo and open it in a browser.
+
 ## Quick start
 
 Needs Linux with BlueZ, `cmake` ≥ 3.16, a C compiler and `libglib2.0-dev`. The BLE library is
@@ -190,7 +195,7 @@ Tested on Ubuntu 26.04 with BlueZ and an Intel laptop adapter. Built and unit-te
 | `tools/plot_csv.py` | plot CSV files: binned overview or raw window (matplotlib) |
 | `third_party/bluez_inc/` | [weliem/bluez_inc](https://github.com/weliem/bluez_inc) 157c604, MIT, unmodified |
 | `openspec/` | specs and changes |
-| `docs/` | protocol notes and development story |
+| `docs/` | protocol notes, development story, animated walkthrough (`animation.html`) |
 
 ## License
 

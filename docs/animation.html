@@ -1,0 +1,730 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>body { margin: 0; } img { max-width: 100%; }</style>
+<title>fnb58d in Motion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a bench schematic. One wide signal-path diagram, a chapter caption, then the daemon's three outputs as instrument read-outs. */
+:root {
+  --bg: #eceff1;
+  --panel: #fbfcfc;
+  --ink: #16212b;
+  --muted: #5a6975;
+  --line: #c3cdd4;
+  --amber: #b9620f;
+  --teal: #12786f;
+  --red: #b8392a;
+  --lcd: #0e1813;
+  --lcd-ink: #8df2b8;
+  --pkt: #16212b;
+  --pkt-ink: #fbfcfc;
+  --display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --body: "Public Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1317; --panel: #151e25; --ink: #dce4ea; --muted: #8b9ba7; --line: #2a3843;
+    --amber: #f0a04b; --teal: #4cc2b6; --red: #f06b5a; --lcd: #070d0a; --lcd-ink: #8df2b8;
+    --pkt: #dce4ea; --pkt-ink: #0d1317; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1317; --panel: #151e25; --ink: #dce4ea; --muted: #8b9ba7; --line: #2a3843;
+  --amber: #f0a04b; --teal: #4cc2b6; --red: #f06b5a; --lcd: #070d0a; --lcd-ink: #8df2b8;
+  --pkt: #dce4ea; --pkt-ink: #0d1317; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 40px;
+}
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 18px; }
+
+header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 8px 24px; }
+h1 { font-family: var(--display); font-weight: 700; font-size: 2.6rem; line-height: 1; margin: 0; letter-spacing: 0.01em; text-wrap: balance; }
+h1 span { color: var(--amber); }
+.lede { margin: 6px 0 0; color: var(--muted); max-width: 62ch; }
+.clock { font-family: var(--mono); font-size: 0.85rem; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+.clock b { color: var(--ink); font-weight: 600; }
+
+.stage { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; overflow-x: auto; }
+.stage svg { display: block; width: 100%; min-width: 700px; height: auto; }
+
+/* diagram */
+.node rect.box { fill: var(--panel); stroke: var(--line); stroke-width: 1.5; }
+.node.hot rect.box { stroke: var(--amber); }
+.node text { fill: var(--ink); font-family: var(--display); font-weight: 600; font-size: 19px; letter-spacing: 0.02em; }
+.node text.sub { fill: var(--muted); font-family: var(--mono); font-weight: 400; font-size: 10.5px; letter-spacing: 0; }
+.wire { stroke: var(--line); stroke-width: 2; fill: none; }
+.wire.air { stroke-dasharray: 3 6; }
+.wlabel { fill: var(--muted); font-family: var(--mono); font-size: 10.5px; }
+.tester rect.body { fill: var(--panel); stroke: var(--ink); stroke-width: 1.5; }
+.tester rect.lcd { fill: var(--lcd); }
+.tester text.lcdt { fill: var(--lcd-ink); font-family: var(--mono); font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.tester text.lcdu { fill: var(--lcd-ink); font-family: var(--mono); font-size: 10px; opacity: 0.7; }
+.tester.off rect.body { stroke: var(--line); }
+.tester.off text.lcdt, .tester.off text.lcdu { opacity: 0; }
+.ring { fill: none; stroke: var(--amber); stroke-width: 1.5; opacity: 0; transform-box: fill-box; transform-origin: center; }
+.advertising .ring { animation: ping 1.8s ease-out infinite; }
+.advertising .ring:nth-child(2) { animation-delay: 0.6s; }
+.advertising .ring:nth-child(3) { animation-delay: 1.2s; }
+@keyframes ping { 0% { transform: scale(0.3); opacity: 0.9; } 100% { transform: scale(2.4); opacity: 0; } }
+.sweep { fill: none; stroke: var(--teal); stroke-width: 1.5; opacity: 0; transform-box: fill-box; transform-origin: center; }
+.scanning .sweep { animation: sweep 1.4s ease-out infinite; }
+@keyframes sweep { 0% { transform: scale(0.9); opacity: 0.8; } 100% { transform: scale(1.35); opacity: 0; } }
+.paused .ring, .paused .sweep { animation-play-state: paused; }
+.statetxt { fill: var(--amber); font-family: var(--mono); font-size: 12px; font-weight: 600; }
+.wdog { fill: var(--red); font-family: var(--mono); font-size: 11px; }
+.out rect.box { fill: var(--panel); stroke: var(--line); stroke-width: 1.5; }
+.out.flash rect.box { stroke: var(--teal); stroke-width: 2.5; }
+.out text { fill: var(--ink); font-family: var(--display); font-weight: 600; font-size: 16px; }
+.out text.sub { fill: var(--muted); font-family: var(--mono); font-size: 10px; font-weight: 400; }
+.pkt rect { rx: 4; }
+.pkt text { font-family: var(--mono); font-size: 10.5px; font-weight: 600; }
+.pkt.cmd rect { fill: var(--amber); } .pkt.cmd text { fill: var(--pkt-ink); }
+.pkt.data rect { fill: var(--teal); } .pkt.data text { fill: var(--pkt-ink); }
+.pkt.ctl rect { fill: var(--pkt); } .pkt.ctl text { fill: var(--pkt-ink); }
+.pkt.udp rect { fill: var(--panel); stroke: var(--teal); stroke-width: 1.5; } .pkt.udp text { fill: var(--teal); }
+.later { fill: var(--muted); font-family: var(--display); font-size: 22px; font-weight: 600; opacity: 0; transition: opacity .3s; }
+.later.show { opacity: 1; }
+
+/* controls + caption */
+.deck { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 18px; align-items: start; }
+@media (max-width: 820px) { .deck { grid-template-columns: minmax(0, 1fr); } }
+.controls { display: grid; gap: 10px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+button {
+  font: 600 0.9rem var(--body); color: var(--ink); background: var(--panel); border: 1px solid var(--line);
+  border-radius: 4px; padding: 6px 12px; cursor: pointer;
+}
+button:hover { border-color: var(--ink); }
+button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+button.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); min-width: 92px; }
+button[aria-pressed="true"] { border-color: var(--amber); color: var(--amber); }
+.chapters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.chapters button { text-align: left; padding: 6px 10px; font-weight: 500; display: grid; gap: 0; }
+.chapters button small { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); }
+.chapters button.now { border-color: var(--amber); box-shadow: inset 3px 0 0 var(--amber); }
+.states { display: flex; flex-wrap: wrap; gap: 6px; }
+.states span {
+  font: 0.78rem var(--mono); padding: 3px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted);
+}
+.states span.on { background: var(--amber); border-color: var(--amber); color: var(--pkt-ink); }
+.label { font: 600 0.72rem var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+
+.caption { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px 18px; display: grid; gap: 6px; min-height: 172px; }
+.caption h2 { font-family: var(--display); font-size: 1.6rem; line-height: 1.1; margin: 0; text-wrap: balance; }
+.caption h2 em { font-style: normal; color: var(--amber); margin-right: 8px; }
+.caption p { margin: 0; max-width: 66ch; }
+.caption code, .readouts code { font-family: var(--mono); font-size: 0.85em; }
+.where { font-family: var(--mono); font-size: 0.8rem; color: var(--teal); }
+
+/* read-outs */
+.readouts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+@media (max-width: 820px) { .readouts { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; display: grid; gap: 8px; min-width: 0; align-content: start; }
+.panel.wide { grid-column: 1 / -1; }
+.panel header { align-items: baseline; }
+.panel .file { font-family: var(--mono); font-size: 0.78rem; color: var(--muted); }
+.bytes { display: flex; flex-wrap: wrap; gap: 3px; min-height: 58px; align-content: flex-start; }
+.byte {
+  font: 600 0.82rem var(--mono); width: 2.2em; text-align: center; padding: 3px 0; border-radius: 3px;
+  background: var(--bg); color: var(--muted); transition: background .2s, color .2s, opacity .3s;
+}
+.byte.sync { background: var(--amber); color: var(--pkt-ink); }
+.byte.type, .byte.len { background: var(--ink); color: var(--bg); }
+.byte.pay { background: var(--teal); color: var(--pkt-ink); }
+.byte.chk { background: transparent; color: var(--muted); outline: 1px dashed var(--muted); }
+.byte.gone { opacity: 0; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.78rem; color: var(--muted); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+.decode { font-family: var(--mono); font-size: 0.82rem; min-height: 4.6em; white-space: pre-wrap; overflow-wrap: anywhere; }
+.decode b { color: var(--teal); }
+.tail { font-family: var(--mono); font-size: 0.78rem; line-height: 1.55; margin: 0; overflow-x: auto; min-height: 9.5em; white-space: pre; font-variant-numeric: tabular-nums; }
+.tail .hdr { color: var(--muted); }
+.tail .new { color: var(--teal); }
+.tail .p4 { color: var(--red); }
+.tail .p6 { color: var(--ink); }
+.tail .pr { color: var(--muted); }
+.count { font-family: var(--mono); font-size: 0.78rem; color: var(--muted); }
+footer { color: var(--muted); font-size: 0.85rem; }
+footer a { color: var(--teal); }
+@media (prefers-reduced-motion: reduce) { .advertising .ring, .scanning .sweep { animation: none; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>fnb58d <span>in motion</span></h1>
+      <p class="lede">How the logger turns a USB tester's Bluetooth notifications into CSV lines, a live UDP stream and a quiet journal, and how it recovers when the tester goes away.</p>
+    </div>
+    <div class="clock">daemon clock<br><b id="clock">2026-11-03 15:25:56.000</b></div>
+  </header>
+
+  <div class="stage" id="stage">
+    <svg viewBox="0 0 1000 290" role="img" aria-label="Signal path: FNB58 tester, Bluetooth LE, bluetoothd, D-Bus, bluez_inc, fnb58d, then CSV file, journal and UDP stream">
+      <!-- wires -->
+      <path class="wire air" d="M168 150 H290"/>
+      <text class="wlabel" x="229" y="140" text-anchor="middle">BLE notifications</text>
+      <path class="wire" d="M440 150 H520"/>
+      <text class="wlabel" x="480" y="140" text-anchor="middle">D-Bus</text>
+      <path class="wire" d="M650 150 H690"/>
+      <path class="wire" d="M840 150 C860 150 860 65 880 65"/>
+      <path class="wire" d="M840 150 H880"/>
+      <path class="wire" d="M840 150 C860 150 860 235 880 235"/>
+
+      <!-- tester -->
+      <g class="tester advertising" id="tester">
+        <g><circle class="ring" cx="168" cy="150" r="16"/><circle class="ring" cx="168" cy="150" r="16"/><circle class="ring" cx="168" cy="150" r="16"/></g>
+        <rect class="body" x="28" y="82" width="140" height="136" rx="10"/>
+        <rect class="lcd" x="40" y="94" width="116" height="78" rx="4"/>
+        <text class="lcdt" id="lcdV" x="148" y="117" text-anchor="end">5.1613</text><text class="lcdu" x="150" y="117">V</text>
+        <text class="lcdt" id="lcdA" x="148" y="140" text-anchor="end">0.1054</text><text class="lcdu" x="150" y="140">A</text>
+        <text class="lcdt" id="lcdW" x="148" y="163" text-anchor="end">0.5442</text><text class="lcdu" x="150" y="163">W</text>
+        <rect x="58" y="184" width="22" height="14" rx="2" fill="none" stroke="var(--muted)" stroke-width="1.2"/>
+        <rect x="116" y="184" width="22" height="14" rx="2" fill="none" stroke="var(--muted)" stroke-width="1.2"/>
+        <text class="wlabel" x="98" y="240" text-anchor="middle" id="testerLabel">FNB58 tester · on</text>
+      </g>
+
+      <!-- bluetoothd -->
+      <g class="node" id="nBluez">
+        <rect class="sweep" x="290" y="110" width="150" height="80" rx="6"/>
+        <rect class="box" x="290" y="110" width="150" height="80" rx="6"/>
+        <text x="365" y="146" text-anchor="middle">bluetoothd</text>
+        <text class="sub" x="365" y="166" text-anchor="middle">BlueZ · adapter hci0</text>
+      </g>
+      <!-- bluez_inc -->
+      <g class="node" id="nBinc">
+        <rect class="box" x="520" y="110" width="130" height="80" rx="6"/>
+        <text x="585" y="146" text-anchor="middle">bluez_inc</text>
+        <text class="sub" x="585" y="166" text-anchor="middle">D-Bus → callbacks</text>
+      </g>
+      <!-- fnb58d -->
+      <g class="node hot" id="nDaemon">
+        <rect class="box" x="690" y="88" width="150" height="124" rx="6"/>
+        <text x="765" y="118" text-anchor="middle">fnb58d</text>
+        <text class="sub" x="765" y="136" text-anchor="middle">GLib main loop</text>
+        <text class="statetxt" id="stateTxt" x="765" y="164" text-anchor="middle">idle</text>
+        <text class="wdog" id="wdog" x="765" y="192" text-anchor="middle"></text>
+      </g>
+      <!-- outputs -->
+      <g class="out" id="oCsv"><rect class="box" x="880" y="40" width="110" height="50" rx="6"/><text x="935" y="62" text-anchor="middle">daily CSV</text><text class="sub" x="935" y="79" text-anchor="middle">flushed every 1 s</text></g>
+      <g class="out" id="oJournal"><rect class="box" x="880" y="125" width="110" height="50" rx="6"/><text x="935" y="147" text-anchor="middle">journal</text><text class="sub" x="935" y="164" text-anchor="middle">events only</text></g>
+      <g class="out" id="oUdp"><rect class="box" x="880" y="210" width="110" height="50" rx="6"/><text x="935" y="232" text-anchor="middle">UDP</text><text class="sub" x="935" y="249" text-anchor="middle">--udp, JSON</text></g>
+
+      <text class="later" id="later" x="480" y="250" text-anchor="middle"></text>
+      <g id="packets"></g>
+    </svg>
+  </div>
+
+  <div class="deck">
+    <div class="controls">
+      <div class="row">
+        <button class="primary" id="play" type="button">Pause</button>
+        <button id="restart" type="button">Restart</button>
+        <span class="label" style="margin-left:6px">Speed</span>
+        <button class="spd" data-speed="0.25" type="button" aria-pressed="false">0.25×</button>
+        <button class="spd" data-speed="0.5" type="button" aria-pressed="false">0.5×</button>
+        <button class="spd" data-speed="1" type="button" aria-pressed="true">1×</button>
+        <button class="spd" data-speed="2" type="button" aria-pressed="false">2×</button>
+      </div>
+      <div class="chapters" id="chapters"></div>
+      <div class="label">Connection state</div>
+      <div class="states" id="states"></div>
+    </div>
+    <div class="caption" aria-live="polite">
+      <h2 id="capTitle"><em>1</em>Scan</h2>
+      <p id="capText"></p>
+      <div class="where" id="capWhere"></div>
+    </div>
+  </div>
+
+  <div class="readouts">
+    <section class="panel wide">
+      <header><span class="label">Parser buffer</span><span class="count" id="dropped">frames 0 · dropped bytes 0</span></header>
+      <div class="bytes" id="bytes"></div>
+      <div class="legend">
+        <span><i style="background:var(--amber)"></i>AA start</span>
+        <span><i style="background:var(--ink)"></i>type, length</span>
+        <span><i style="background:var(--teal)"></i>payload</span>
+        <span><i style="outline:1px dashed var(--muted)"></i>check byte, algorithm unknown, not verified</span>
+      </div>
+      <div class="decode" id="decode">Notification bytes collect here. A frame is cut out once it is complete, even when it spans two notifications.</div>
+    </section>
+    <section class="panel">
+      <header><span class="label">CSV</span><span class="file" id="csvName">/var/lib/fnb58d/2026-11-03_fnb58.csv</span></header>
+      <pre class="tail" id="csv"></pre>
+      <span class="count" id="csvCount">0 readings</span>
+    </section>
+    <section class="panel">
+      <header><span class="label">UDP datagrams</span><span class="file">--udp 127.0.0.1:5005</span></header>
+      <pre class="tail" id="udp"></pre>
+      <span class="count" id="udpCount">0 sent</span>
+    </section>
+    <section class="panel wide">
+      <header><span class="label">Journal</span><span class="file">journalctl -u fnb58d -f</span></header>
+      <pre class="tail" id="journal"></pre>
+    </section>
+  </div>
+
+  <footer>Bytes in chapter 3 were captured from a real tester, re-cut here into 20-byte notifications. Readings in later chapters follow the pattern of a real 5.5 h session (about 10 mA idle, single-reading bursts to 1 A); the tester name and address are placeholders. Source: <a href="https://github.com/melnykai/fnb58-ble-logger">github.com/melnykai/fnb58-ble-logger</a>.</footer>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const SVGNS = "http://www.w3.org/2000/svg";
+  const NAME = "FNB58-123456", MAC = "AA:BB:CC:DD:EE:FF", DIR = "/var/lib/fnb58d";
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // ---- simulation clock: advances only while playing; every wait and flight runs on it ----
+  let simNow = 0, last = 0, playing = !reduced, speed = 1, token = 0;
+  const CANCEL = { cancelled: true };
+  const tickers = new Set();
+  function frame(ts) {
+    const dt = last ? Math.min(ts - last, 100) : 0;
+    last = ts;
+    if (playing) simNow += dt * speed;
+    for (const t of [...tickers]) t();
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  function wait(ms) {
+    const my = token, end = simNow + ms;
+    return new Promise((res, rej) => {
+      const t = () => {
+        if (my !== token) { tickers.delete(t); rej(CANCEL); }
+        else if (simNow >= end) { tickers.delete(t); res(); }
+      };
+      tickers.add(t);
+    });
+  }
+
+  // A labelled packet that travels along a polyline in `ms` of simulated time.
+  function fly(label, pts, ms, cls) {
+    const my = token, start = simNow;
+    const g = document.createElementNS(SVGNS, "g");
+    g.setAttribute("class", "pkt " + cls);
+    const w = Math.max(26, label.length * 6.6 + 12);
+    const r = document.createElementNS(SVGNS, "rect");
+    r.setAttribute("x", -w / 2); r.setAttribute("y", -10); r.setAttribute("width", w); r.setAttribute("height", 20);
+    const t = document.createElementNS(SVGNS, "text");
+    t.setAttribute("text-anchor", "middle"); t.setAttribute("y", 4); t.textContent = label;
+    g.append(r, t);
+    $("packets").append(g);
+    const seg = [];
+    let total = 0;
+    for (let i = 1; i < pts.length; i++) {
+      const d = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+      seg.push(d); total += d;
+    }
+    const place = (f) => {
+      let d = f * total, i = 0;
+      while (i < seg.length - 1 && d > seg[i]) { d -= seg[i]; i++; }
+      const k = seg[i] ? d / seg[i] : 0;
+      const x = pts[i][0] + (pts[i + 1][0] - pts[i][0]) * k, y = pts[i][1] + (pts[i + 1][1] - pts[i][1]) * k;
+      g.setAttribute("transform", `translate(${x.toFixed(1)},${y.toFixed(1)})`);
+    };
+    place(0);
+    return new Promise((res, rej) => {
+      const tk = () => {
+        if (my !== token) { tickers.delete(tk); g.remove(); rej(CANCEL); return; }
+        const f = Math.min(1, (simNow - start) / ms);
+        place(f);
+        if (f >= 1) { tickers.delete(tk); g.remove(); res(); }
+      };
+      tickers.add(tk);
+    });
+  }
+  const quiet = (p) => p.catch(() => {});
+
+  const PATH_IN = [[168, 150], [290, 150], [440, 150], [520, 150], [650, 150], [690, 150]];
+  const PATH_OUT = [...PATH_IN].reverse();
+  const TO = { csv: [[840, 150], [860, 120], [880, 65]], journal: [[840, 150], [880, 150]], udp: [[840, 150], [860, 180], [880, 235]] };
+
+  // ---- world state shown on the page ----
+  const STATES = ["idle", "scanning", "connecting", "connected", "streaming", "disconnecting"];
+  const statesEl = $("states");
+  STATES.forEach((s) => { const e = document.createElement("span"); e.textContent = s; e.dataset.s = s; statesEl.append(e); });
+  function setState(s) {
+    $("stateTxt").textContent = s;
+    for (const e of statesEl.children) e.classList.toggle("on", e.dataset.s === s);
+    $("nBluez").classList.toggle("scanning", s === "scanning");
+  }
+  function testerOn(on) {
+    $("tester").classList.toggle("off", !on);
+    $("testerLabel").textContent = on ? "FNB58 tester · on" : "FNB58 tester · switched off";
+    if (!on) $("tester").classList.remove("advertising");
+  }
+  function advertising(on) { $("tester").classList.toggle("advertising", on); }
+
+  // Wall clock of the daemon, CET (+0100) like the real logs.
+  let wall = 0;
+  const pad = (n, k = 2) => String(n).padStart(k, "0");
+  function local(ms) {
+    const d = new Date(ms + 3600e3);
+    return {
+      day: `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`,
+      hms: `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}.${pad(d.getUTCMilliseconds(), 3)}`,
+    };
+  }
+  function showClock() { const l = local(wall); $("clock").textContent = `${l.day} ${l.hms}`; }
+  function setWall(ms) { wall = ms; showClock(); }
+  function advance(ms) { wall += ms; showClock(); }
+
+  // Read-outs keep their last lines, like `tail`.
+  function render(el) {
+    const lines = el._lines || [];
+    const hdr = el._header ? `<span class="hdr">${el._header}</span>\n` : "";
+    el.innerHTML = hdr + lines.map((l, i) => (i === lines.length - 1 ? l.replace('class="', 'class="new ') : l)).join("\n");
+  }
+  function pushLine(el, html, keep) {
+    const lines = el._lines || (el._lines = []);
+    lines.push(html);
+    while (lines.length > keep) lines.shift();
+    render(el);
+  }
+  function clearTail(el) { el._lines = []; render(el); }
+
+  const PRIO = { 6: "p6", 4: "p4" };
+  function journal(prio, msg) {
+    quiet(fly("event", TO.journal, 350, "ctl"));
+    const l = local(wall);
+    pushLine($("journal"), `<span class="${PRIO[prio]}"><span class="pr">${l.hms.slice(0, 8)} &lt;${prio}&gt;</span> ${esc(msg)}</span>`, 7);
+  }
+  const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+
+  let csvDay = "", csvRows = 0, udpSent = 0;
+  const HEADER = "time_iso,epoch_s,voltage_v,current_a,power_w";
+  function openDay(day) {
+    csvDay = day;
+    $("csvName").textContent = `${DIR}/${day}_fnb58.csv`;
+    $("csv")._header = HEADER;
+    clearTail($("csv"));
+  }
+  function flash(id) { const e = $(id); e.classList.add("flash"); setTimeout(() => e.classList.remove("flash"), 220); }
+
+  // One accepted measurement: LCD, CSV line, UDP datagram. Mirrors on_frame() + udp_out_send().
+  function emit(m) {
+    const l = local(wall);
+    if (l.day !== csvDay) {
+      const prev = csvDay;
+      openDay(l.day);
+      if (prev) {
+        journal(6, `logging to ${DIR}/${l.day}_fnb58.csv`);
+        journal(6, `deleted ${DIR}/2026-10-20_fnb58.csv (older than 14 days)`);
+      }
+    }
+    const epoch = (wall / 1000).toFixed(3);
+    const v = m.v.toFixed(4), a = m.a.toFixed(4), w = m.w.toFixed(4);
+    $("lcdV").textContent = v; $("lcdA").textContent = a; $("lcdW").textContent = w;
+    pushLine($("csv"), `<span class="row">${l.day}T${l.hms}+0100,${epoch},${v},${a},${w}</span>`, 5);
+    csvRows++; $("csvCount").textContent = `${csvRows} readings in this view`;
+    quiet(fly("JSON", TO.udp, 380, "udp"));
+    udpSent++; $("udpCount").textContent = `${udpSent} sent, none retried`;
+    pushLine($("udp"), `<span class="row">{"epoch_s":${epoch},"voltage_v":${v},"current_a":${a},"power_w":${w}}</span>`, 5);
+  }
+
+  // Readings shaped like the real session: ~10 mA idle, short bursts to about 1 A.
+  let seed = 7;
+  const rnd = () => ((seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648);
+  function reading() {
+    const a = rnd() < 0.13 ? 0.25 + rnd() * 0.8 : 0.006 + rnd() * 0.007;
+    const v = 5.158 - 0.62 * a + (rnd() - 0.5) * 0.006;
+    return { v, a, w: v * a };
+  }
+
+  // ---- the parser, a port of fnb58_parser_feed(): sync on AA, known type 04-08, length <= 64 ----
+  const CAPTURE = [
+    "aa060610004600010be3aa07042b146e00d1aa040c9dc900001e040000421500008caa0507f67707000133014f",
+    "aa060610004600010be3aa07042b146b0024",
+    "aa060610004600010be3aa070428146800abaa040c9cc900001e0400004115000025aa05074778070001320168",
+    "aa060610004600010be3aa0704281469009aaa0811015c330000b8080000d7020000b9010000a1",
+    "aa060610004600010be3aa07042d146600e1",
+  ];
+  const buf = []; // {b, el}
+  let frames = 0, dropped = 0;
+  function counters() { $("dropped").textContent = `frames ${frames} · dropped bytes ${dropped}`; }
+  function addBytes(bytes) {
+    for (const b of bytes) {
+      const el = document.createElement("span");
+      el.className = "byte"; el.textContent = b.toString(16).padStart(2, "0");
+      $("bytes").append(el); buf.push({ b, el });
+    }
+  }
+  function removeFront(n) { for (let i = 0; i < n; i++) buf.shift().el.remove(); }
+  const hex = (arr) => arr.map((b) => b.toString(16).padStart(2, "0")).join(" ");
+  const i32 = (p, o) => (p[o] | (p[o + 1] << 8) | (p[o + 2] << 16) | (p[o + 3] << 24));
+
+  async function parse(slow) {
+    for (;;) {
+      if (buf.length && buf[0].b !== 0xaa) { buf[0].el.classList.add("gone"); await wait(slow ? 150 : 0); removeFront(1); dropped++; counters(); continue; }
+      if (buf.length < 3) return;
+      const type = buf[1].b, len = buf[2].b;
+      if (type < 0x04 || type > 0x08 || len > 64) { removeFront(1); dropped++; counters(); continue; }
+      if (buf.length < len + 4) {
+        $("decode").innerHTML = `Frame type ${type.toString(16).padStart(2, "0")} needs ${len + 4} bytes, ${buf.length} here: <b>waiting for the next notification</b>.`;
+        return;
+      }
+      const f = buf.slice(0, len + 4);
+      f[0].el.classList.add("sync"); f[1].el.classList.add("type"); f[2].el.classList.add("len");
+      for (let i = 3; i < 3 + len; i++) f[i].el.classList.add("pay");
+      f[len + 3].el.classList.add("chk");
+      frames++; counters();
+      const p = f.slice(3, 3 + len).map((x) => x.b);
+      if (type === 0x04) {
+        const v = i32(p, 0), a = i32(p, 4), w = i32(p, 8);
+        $("decode").innerHTML =
+          `type 04, 12-byte payload: three int32, little-endian, ÷ 10000\n` +
+          `${hex(p.slice(0, 4))} → ${v} → <b>${(v / 1e4).toFixed(4)} V</b>\n` +
+          `${hex(p.slice(4, 8))} → ${a} → <b>${(a / 1e4).toFixed(4)} A</b>\n` +
+          `${hex(p.slice(8, 12))} → ${w} → <b>${(w / 1e4).toFixed(4)} W</b>   0–30 V and ±10 A range check: ok`;
+        await wait(slow ? 1400 : 300);
+        emit({ v: v / 1e4, a: a / 1e4, w: w / 1e4 });
+        if ($("stateTxt").textContent !== "streaming") {
+          setState("streaming");
+          journal(6, `streaming: ${(v / 1e4).toFixed(4)} V  ${(a / 1e4).toFixed(4)} A  ${(w / 1e4).toFixed(4)} W`);
+        }
+      } else {
+        $("decode").innerHTML = `type ${type.toString(16).padStart(2, "0")}, ${len}-byte payload: <b>not decoded</b>, written as hex only with --raw.`;
+        await wait(slow ? 650 : 120);
+      }
+      for (const x of f) x.el.classList.add("gone");
+      await wait(slow ? 200 : 60);
+      removeFront(len + 4);
+    }
+  }
+
+  async function startSequence(fast) {
+    const t = fast ? 0.5 : 1;
+    setState("connecting");
+    await fly("connect", PATH_OUT, 1100 * t, "ctl");
+    setState("connected");
+    journal(6, `connected to ${NAME} (${MAC})`);
+    await wait(500 * t);
+    await fly("aa 81 00 f4 → ffe9", PATH_OUT, 1300 * t, "cmd");
+    await fly("ok", PATH_IN, 700 * t, "ctl");
+    await fly("aa 82 00 a7 → ffe9", PATH_OUT, 1300 * t, "cmd");
+    await fly("ok", PATH_IN, 700 * t, "ctl");
+    await fly("notify on ffe4", PATH_OUT, 1100 * t, "ctl");
+  }
+
+  async function stream(n, gap) {
+    for (let i = 0; i < n; i++) {
+      advance(250);
+      const m = reading();
+      quiet(fly("04", PATH_IN, 600, "data").then(() => { emit(m); }));
+      if (i % 4 === 3) flash("oCsv");
+      await wait(gap);
+    }
+    await wait(650);
+  }
+
+  // ---- chapters ----
+  const T0 = Date.UTC(2026, 10, 3, 14, 25, 56); // 15:25:56 +0100
+  const CH = [
+    {
+      title: "Scan", short: "find the tester",
+      text: "The daemon asks BlueZ to scan for devices whose name starts with FNB58. The tester advertises its data service ffe0. The first match is taken; with --address only that one tester is accepted.",
+      where: "start_scan() → on_scan_result()   src/fnb58d.c",
+      setup() { setState("idle"); testerOn(true); advertising(true); setWall(T0); },
+      async run() {
+        journal(6, `fnb58d started: adapter hci0, CSV dir ${DIR}, watchdog 10 s, keep 14 days, UDP to 127.0.0.1:5005`);
+        await wait(700);
+        setState("scanning");
+        journal(6, "scanning for FNB58");
+        await wait(1800);
+        await fly(`adv ${NAME} · ffe0`, PATH_IN, 2200, "ctl");
+        advance(2100);
+        journal(6, `found ${NAME} (${MAC}) rssi -60`);
+        await wait(1200);
+      },
+    },
+    {
+      title: "Connect and start", short: "two start writes",
+      text: "After connecting, the tester sends nothing. It starts streaming only after two writes to characteristic ffe9, aa 81 00 f4 then aa 82 00 a7, and a subscription to notifications on ffe4. Those two commands came from a community project; everything else was found by probing.",
+      where: "on_connection_state() → on_services_resolved() → send_start_command() → on_write()",
+      setup() { setState("scanning"); testerOn(true); advertising(false); setWall(T0 + 2100); },
+      async run() {
+        advertising(false);
+        await startSequence(false);
+        advance(1400);
+        await wait(900);
+      },
+    },
+    {
+      title: "Rebuild frames", short: "real captured bytes",
+      text: "Notifications are small (20 bytes at the default MTU), and a frame can be split across two of them. The parser keeps a buffer, syncs on AA, checks the type (04 to 08) and length, and cuts a frame out only when all its bytes are there. The check byte is kept but cannot be verified: its algorithm is unknown.",
+      where: "on_notify() → fnb58_parser_feed()   src/fnb58_proto.c",
+      setup() { setState("connected"); testerOn(true); advertising(false); setWall(T0 + 3500); },
+      async run() {
+        const all = CAPTURE.join("").match(/../g).map((h) => parseInt(h, 16));
+        for (let off = 0; off < all.length; off += 20) {
+          const chunk = all.slice(off, off + 20);
+          await fly(`notify ${chunk.length} B`, PATH_IN, 1000, "data");
+          advance(90);
+          addBytes(chunk);
+          await wait(350);
+          await parse(true);
+          await wait(250);
+        }
+        await wait(900);
+      },
+    },
+    {
+      title: "Decode and write", short: "CSV, UDP, journal",
+      text: "Each type 04 frame becomes one reading, about 4 per second. It is appended to the day's CSV file, flushed every second, and, with --udp, sent as one JSON datagram that never blocks. The journal stays quiet: it gets events, never one line per reading.",
+      where: "fnb58_decode_measurement() → on_frame() → udp_out_send();  on_tick() flushes",
+      setup() { setState("streaming"); testerOn(true); advertising(false); setWall(T0 + 6000); },
+      async run() {
+        $("decode").textContent = "Streaming: type 04 frames decoded as above, one reading every 250 ms on average.";
+        await stream(28, 340);
+      },
+    },
+    {
+      title: "Lose and recover", short: "watchdog and rescan",
+      text: "The tester is switched off. Nothing tells the daemon, so a watchdog does: after 10 s without a reading it drops the link, forgets the device and scans again. A scan that finds nothing for 60 s restarts with a longer pause, 1 s then 2, 4 and up to 30 s. When the tester comes back, it streams again within about 2 s.",
+      where: "on_tick() watchdog → force_disconnect() → link_lost() → schedule_rescan()",
+      setup() { setState("streaming"); testerOn(true); advertising(false); setWall(T0 + 14000); },
+      async run() {
+        await stream(8, 340);
+        testerOn(false);
+        for (let s = 1; s <= 10; s++) {
+          await wait(420);
+          advance(1000);
+          $("wdog").textContent = `no reading for ${s} s`;
+        }
+        journal(4, "no data for 10 s, dropping the link");
+        setState("disconnecting");
+        await fly("disconnect", PATH_OUT, 900, "ctl");
+        journal(4, `disconnected from ${MAC}`);
+        $("wdog").textContent = "";
+        setState("idle");
+        journal(6, "rescanning in 1 s");
+        await wait(700); advance(1000);
+        setState("scanning");
+        journal(6, "scanning for FNB58");
+        await wait(1500);
+        $("later").textContent = "60 s later, nothing found"; $("later").classList.add("show");
+        advance(60000);
+        await wait(1600);
+        $("later").classList.remove("show");
+        journal(6, "tester not seen for 60 s, restarting discovery");
+        setState("idle");
+        journal(6, "rescanning in 2 s");
+        await wait(900); advance(2000);
+        setState("scanning");
+        journal(6, "scanning for FNB58");
+        await wait(800);
+        testerOn(true); advertising(true);
+        await wait(1200);
+        await fly(`adv ${NAME}`, PATH_IN, 1300, "ctl");
+        advertising(false);
+        journal(6, `found ${NAME} (${MAC}) rssi -58`);
+        await startSequence(true);
+        advance(1800);
+        const m = reading();
+        await fly("04", PATH_IN, 600, "data");
+        emit(m);
+        setState("streaming");
+        journal(6, `streaming: ${m.v.toFixed(4)} V  ${m.a.toFixed(4)} A  ${m.w.toFixed(4)} W`);
+        await stream(6, 340);
+      },
+    },
+    {
+      title: "Midnight", short: "new file, old ones go",
+      text: "Files are per day. The first reading after midnight opens a new file with its own header, and files older than 14 days (--keep-days) are deleted. A restart on the same day appends to the existing file without a second header.",
+      where: "prepare_files() → open_csv() → purge_old_files()",
+      setup() { setState("streaming"); testerOn(true); advertising(false); setWall(Date.UTC(2026, 10, 3, 22, 59, 58, 200)); },
+      async run() {
+        $("decode").textContent = "Streaming across midnight.";
+        await stream(14, 380);
+        await wait(1500);
+      },
+    },
+  ];
+
+  // ---- chapter runner ----
+  const chapEl = $("chapters");
+  CH.forEach((c, i) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.innerHTML = `<span>${i + 1} · ${c.title}</span><small>${c.short}</small>`;
+    b.addEventListener("click", () => runFrom(i, true));
+    chapEl.append(b);
+  });
+  function caption(i) {
+    $("capTitle").innerHTML = `<em>${i + 1}</em>${CH[i].title}`;
+    $("capText").textContent = CH[i].text;
+    $("capWhere").textContent = CH[i].where;
+    [...chapEl.children].forEach((b, k) => b.classList.toggle("now", k === i));
+  }
+  function resetPanels() {
+    $("packets").replaceChildren();
+    $("bytes").replaceChildren(); buf.length = 0; frames = 0; dropped = 0; counters();
+    $("decode").textContent = "Notification bytes collect here. A frame is cut out once it is complete, even when it spans two notifications.";
+    $("wdog").textContent = ""; $("later").classList.remove("show");
+  }
+
+  async function runFrom(start, jumped) {
+    const my = ++token;
+    for (const t of [...tickers]) t(); // cancel pending waits and flights now
+    if (jumped || start === 0) {
+      clearTail($("journal")); clearTail($("udp")); csvRows = 0; udpSent = 0; seed = 7;
+      $("csvCount").textContent = "0 readings"; $("udpCount").textContent = "0 sent";
+      csvDay = "";
+    }
+    for (let i = start; ; i = (i + 1) % CH.length) {
+      if (i === 0 && my === token && !(jumped && i === start)) {
+        clearTail($("journal")); clearTail($("udp")); csvRows = 0; udpSent = 0; seed = 7; csvDay = "";
+      }
+      resetPanels();
+      CH[i].setup();
+      if (!csvDay || local(wall).day !== csvDay) openDay(local(wall).day);
+      caption(i);
+      try {
+        await CH[i].run();
+        await wait(900);
+      } catch (e) {
+        if (e === CANCEL) return;
+        throw e;
+      }
+      if (my !== token) return;
+      jumped = false;
+    }
+  }
+
+  // ---- controls ----
+  function setPlaying(p) {
+    playing = p;
+    $("play").textContent = p ? "Pause" : "Play";
+    document.body.classList.toggle("paused", !p);
+  }
+  $("play").addEventListener("click", () => setPlaying(!playing));
+  $("restart").addEventListener("click", () => { runFrom(0, true); setPlaying(true); });
+  const speedButtons = [...document.querySelectorAll(".spd")];
+  function setSpeed(s) {
+    speed = s;
+    for (const b of speedButtons) b.setAttribute("aria-pressed", String(Number(b.dataset.speed) === s));
+  }
+  for (const b of speedButtons) b.addEventListener("click", () => setSpeed(Number(b.dataset.speed)));
+  document.addEventListener("visibilitychange", () => { last = 0; });
+
+  setPlaying(playing);
+  runFrom(0, true);
+})();
+</script>
+</body>
+</html>
