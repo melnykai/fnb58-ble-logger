@@ -176,6 +176,7 @@ footer a { color: var(--teal); }
       <!-- wires -->
       <path class="wire air" d="M168 150 H290"/>
       <text class="wlabel" x="229" y="140" text-anchor="middle">BLE notifications</text>
+      <text class="wlabel" x="229" y="168" text-anchor="middle">4 readings/s</text>
       <path class="wire" d="M440 150 H520"/>
       <text class="wlabel" x="480" y="140" text-anchor="middle">D-Bus</text>
       <path class="wire" d="M650 150 H690"/>
@@ -431,7 +432,7 @@ footer a { color: var(--teal); }
     const v = m.v.toFixed(4), a = m.a.toFixed(4), w = m.w.toFixed(4);
     $("lcdV").textContent = v; $("lcdA").textContent = a; $("lcdW").textContent = w;
     pushLine($("csv"), `<span class="row">${l.day}T${l.hms}+0100,${epoch},${v},${a},${w}</span>`, 5);
-    csvRows++; $("csvCount").textContent = `${csvRows} readings in this view`;
+    csvRows++; $("csvCount").textContent = `${csvRows} readings in this view · tester rate 4/s, ≈ 345,600 lines/day`;
     quiet(fly("JSON", TO.udp, 380, "udp"));
     udpSent++; $("udpCount").textContent = `${udpSent} sent, none retried`;
     pushLine($("udp"), `<span class="row">{"epoch_s":${epoch},"voltage_v":${v},"current_a":${a},"power_w":${w}}</span>`, 5);
@@ -585,7 +586,7 @@ footer a { color: var(--teal); }
     },
     {
       title: "Decode and write", short: "CSV, UDP, journal",
-      text: "Each type 04 frame becomes one reading, about 4 per second. It is appended to the day's CSV file, flushed every second, and, with --udp, sent as one JSON datagram that never blocks. The journal stays quiet: it gets events, never one line per reading.",
+      text: "Each type 04 frame becomes one reading. The tester sets the rate: 4 readings per second (4.00/s measured over hours), arriving unevenly, sometimes two in one notification. That is about 22 MB of CSV per day. Each reading is appended to the day's CSV file, flushed every second, and, with --udp, sent as one JSON datagram that never blocks. The journal stays quiet: it gets events, never one line per reading.",
       where: "fnb58_decode_measurement() → on_frame() → udp_out_send();  on_tick() flushes",
       setup() { setState("streaming"); testerOn(true); advertising(false); setWall(T0 + 6000); },
       async run() {
