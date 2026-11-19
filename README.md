@@ -123,6 +123,11 @@ FNB58 ──BLE──> bluetoothd (BlueZ) ──D-Bus──> bluez_inc ──cal
   subscribe to `ffe4`.
 - **Parse:** rebuild frames `AA type len payload check` across notifications, and decode type `04`
   into V, A and W.
+- **Rate:** **4 readings per second**, set by the tester. That is 4.00/s measured over 5.5 h and
+  on a second unit, about 345,600 CSV lines (≈ 22 MB) per day. Readings arrive unevenly, sometimes
+  two in one notification. Each is stamped when it arrives, so a single timestamp can be up to about
+  0.3 s off while the average rate is exact. No Bluetooth command to raise the rate is known. The
+  vendor documents up to 100 samples/s only over USB with its PC software.
 - **Recover:** a lost link, 10 s without a reading, or 30 s connected with no data → forget the device
   and rescan. Rescans back off from 1 s to 30 s.
 - **Store:** CSV flushed every 1 s, a new file at midnight, files deleted after 14 days.

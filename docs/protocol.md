@@ -36,7 +36,7 @@ AA  <type>  <len>  <payload: len bytes>  <check>
 
 | Type | Length | Rate (20 s sample) | Meaning |
 |---|---|---|---|
-| `04` | 12 | 3.5 /s | **voltage, current, power**: three int32 little-endian ÷ 10000 → V, A, W (confirmed: V × A matches W) |
+| `04` | 12 | 3.5 /s (4.00 /s over hours, two units) | **voltage, current, power**: three int32 little-endian ÷ 10000 → V, A, W (confirmed: V × A matches W) |
 | `05` | 7 | 3.5 /s | unknown |
 | `06` | 6 | 8.7 /s | unknown |
 | `07` | 4 | 8.7 /s | unknown |
